@@ -103,44 +103,64 @@ let cameraStream = null;
 
 async function mulaiKamera() {
 
-  const video =
-    document.getElementById("video");
-
-  const status =
-    document.getElementById("status");
-
+  const video = document.getElementById("video");
+  const status = document.getElementById("status");
 
   try {
+
+    if (!navigator.mediaDevices) {
+      status.innerText =
+        "❌ Browser tidak mendukung akses kamera.";
+      return;
+    }
+
+    if (!navigator.mediaDevices.getUserMedia) {
+      status.innerText =
+        "❌ getUserMedia tidak tersedia.";
+      return;
+    }
 
     status.innerText =
       "⏳ Meminta izin kamera...";
 
-
-    cameraStream =
+    const stream =
       await navigator.mediaDevices.getUserMedia({
-
-        video: true,
-
+        video: {
+          facingMode: "user"
+        },
         audio: false
-
       });
 
+    cameraStream = stream;
 
-    video.srcObject =
-      cameraStream;
+    video.srcObject = stream;
 
+    video.onloadedmetadata = function() {
 
-    await video.play();
+      video.play()
+        .then(function() {
 
+          status.innerText =
+            "🟢 Kamera siap digunakan.";
 
-    status.innerText =
-      "🟢 Kamera siap digunakan.";
+          console.log(
+            "KAMERA BERHASIL AKTIF"
+          );
 
+        })
+        .catch(function(error) {
 
-    console.log(
-      "KAMERA BERHASIL AKTIF"
-    );
+          console.error(
+            "VIDEO PLAY ERROR:",
+            error
+          );
 
+          status.innerText =
+            "❌ Video tidak dapat dijalankan.";
+
+        });
+
+    };
 
   } catch (error) {
 
@@ -149,17 +169,13 @@ async function mulaiKamera() {
       error
     );
 
-
     status.innerText =
       "❌ Kamera gagal: " +
       error.name +
       " - " +
       error.message;
-
   }
-
 }
-
 
 function ambilFoto() {
 
@@ -232,10 +248,9 @@ window.parent.postMessage(
 );
 
 
-window.addEventListener(
-  "load",
-  mulaiKamera
-);
+window.addEventListener("DOMContentLoaded", function() {
+  mulaiKamera();
+});
 
 </script>
 
