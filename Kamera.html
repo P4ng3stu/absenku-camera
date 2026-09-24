@@ -1,19 +1,11 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ABSENKU Camera</title>
 
   <style>
-
     body {
       margin: 0;
       padding: 20px;
@@ -52,10 +44,6 @@
       cursor: pointer;
     }
 
-    button:active {
-      transform: scale(0.98);
-    }
-
     #status {
       margin-top: 15px;
       padding: 12px;
@@ -66,11 +54,8 @@
     canvas {
       display: none;
     }
-
   </style>
-
 </head>
-
 
 <body>
 
@@ -81,10 +66,12 @@
     <video
       id="video"
       autoplay
-      playsinline
-    ></video>
+      playsinline>
+    </video>
 
-    <button onclick="ambilFoto()">
+    <button
+      id="btnFoto"
+      type="button">
       📸 AMBIL FOTO
     </button>
 
@@ -96,86 +83,58 @@
 
   </div>
 
-
   <script>
 
     let cameraStream = null;
 
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const status = document.getElementById("status");
+    const btnFoto = document.getElementById("btnFoto");
+
 
     async function mulaiKamera() {
 
-      const video =
-        document.getElementById("video");
-
-      const status =
-        document.getElementById("status");
-
-
       try {
+
+        status.textContent =
+          "⏳ Meminta izin kamera...";
 
         if (
           !navigator.mediaDevices ||
           !navigator.mediaDevices.getUserMedia
         ) {
 
-          status.innerText =
-            "❌ Browser tidak mendukung kamera.";
-
-          return;
+          throw new Error(
+            "Browser tidak mendukung akses kamera."
+          );
 
         }
 
 
-        status.innerText =
-          "⏳ Meminta izin kamera...";
-
-
-        const stream =
+        cameraStream =
           await navigator.mediaDevices.getUserMedia({
 
-            video: {
-              facingMode: "user"
-            },
+            video: true,
 
             audio: false
 
           });
 
 
-        cameraStream = stream;
-
-
         video.srcObject =
           cameraStream;
 
 
-        video.onloadedmetadata =
-          function() {
+        await video.play();
 
-            video.play()
-              .then(function() {
 
-                status.innerText =
-                  "🟢 Kamera siap digunakan.";
+        status.textContent =
+          "🟢 Kamera siap digunakan.";
 
-                console.log(
-                  "KAMERA BERHASIL AKTIF"
-                );
-
-              })
-              .catch(function(error) {
-
-                console.error(
-                  "VIDEO PLAY ERROR:",
-                  error
-                );
-
-                status.innerText =
-                  "❌ Video tidak dapat dijalankan.";
-
-              });
-
-          };
+        console.log(
+          "KAMERA BERHASIL AKTIF"
+        );
 
 
       } catch (error) {
@@ -185,11 +144,10 @@
           error
         );
 
-
-        status.innerText =
-          "❌ Kamera gagal: " +
+        status.textContent =
+          "❌ " +
           error.name +
-          " - " +
+          ": " +
           error.message;
 
       }
@@ -197,106 +155,99 @@
     }
 
 
-    function ambilFoto() {
+    btnFoto.addEventListener(
+      "click",
+      function() {
 
-      const video =
-        document.getElementById("video");
+        if (
+          !cameraStream ||
+          video.videoWidth === 0
+        ) {
 
-      const canvas =
-        document.getElementById("canvas");
+          alert(
+            "Kamera belum siap."
+          );
+
+          return;
+
+        }
 
 
-      if (
-        !cameraStream ||
-        video.videoWidth === 0
-      ) {
+        canvas.width =
+          video.videoWidth;
 
-        alert(
-          "Kamera belum siap."
+        canvas.height =
+          video.videoHeight;
+
+
+        const context =
+          canvas.getContext("2d");
+
+
+        context.drawImage(
+          video,
+          0,
+          0,
+          canvas.width,
+          canvas.height
         );
 
-        return;
+
+        const foto =
+          canvas.toDataURL(
+            "image/jpeg",
+            0.8
+          );
+
+
+        status.textContent =
+          "🟢 Foto berhasil diambil.";
+
+
+        console.log(
+          "FOTO BERHASIL DIAMBIL"
+        );
+
+
+        if (window.opener) {
+
+          window.opener.postMessage(
+
+            {
+              type: "ABSENKU_FOTO",
+              foto: foto
+            },
+
+            "*"
+
+          );
+
+        }
+
+
+        if (
+          window.parent &&
+          window.parent !== window
+        ) {
+
+          window.parent.postMessage(
+
+            {
+              type: "ABSENKU_FOTO",
+              foto: foto
+            },
+
+            "*"
+
+          );
+
+        }
 
       }
+    );
 
 
-      canvas.width =
-        video.videoWidth;
-
-      canvas.height =
-        video.videoHeight;
-
-
-      const context =
-        canvas.getContext("2d");
-
-
-      context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      const foto =
-        canvas.toDataURL(
-          "image/jpeg",
-          0.8
-        );
-
-
-      document.getElementById(
-        "status"
-      ).innerText =
-        "🟢 Foto berhasil diambil.";
-
-
-      console.log(
-        "FOTO BERHASIL DIAMBIL"
-      );
-
-
-      // Kirim foto kembali ke ABSENKU
-
-      if (window.opener) {
-
-        window.opener.postMessage(
-
-          {
-            type: "ABSENKU_FOTO",
-            foto: foto
-          },
-
-          "*"
-
-        );
-
-      }
-
-
-      // Jika kamera dibuka sebagai iframe
-
-      else {
-
-        window.parent.postMessage(
-
-          {
-            type: "ABSENKU_FOTO",
-            foto: foto
-          },
-
-          "*"
-
-        );
-
-      }
-
-    }
-
-
-    window.addEventListener(
+    document.addEventListener(
       "DOMContentLoaded",
       function() {
 
@@ -308,5 +259,4 @@
   </script>
 
 </body>
-
 </html>
