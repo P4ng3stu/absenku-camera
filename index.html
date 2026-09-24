@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+  <title>ABSENKU Camera</title>
+
+  <style>
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 16px;
+      background: #000;
+      display: block;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #1f2937;
+    }
+
+    canvas {
+      display: none;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+  <h1>📷 ABSENKU</h1>
+
+  <video
+    id="video"
+    autoplay
+    playsinline>
+  </video>
+
+  <button onclick="ambilFoto()">
+    📸 AMBIL FOTO
+  </button>
+
+  <div id="status">
+    ⏳ Menyiapkan kamera...
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+</div>
+
+
+<script>
+
+let cameraStream = null;
+
+
+async function mulaiKamera() {
+
+  const video =
+    document.getElementById("video");
+
+  const status =
+    document.getElementById("status");
+
+
+  try {
+
+    status.innerText =
+      "⏳ Meminta izin kamera...";
+
+
+    cameraStream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: true,
+
+        audio: false
+
+      });
+
+
+    video.srcObject =
+      cameraStream;
+
+
+    await video.play();
+
+
+    status.innerText =
+      "🟢 Kamera siap digunakan.";
+
+
+    console.log(
+      "KAMERA BERHASIL AKTIF"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "ERROR KAMERA:",
+      error
+    );
+
+
+    status.innerText =
+      "❌ Kamera gagal: " +
+      error.name +
+      " - " +
+      error.message;
+
+  }
+
+}
+
+
+function ambilFoto() {
+
+  const video =
+    document.getElementById("video");
+
+  const canvas =
+    document.getElementById("canvas");
+
+
+  if (
+    !cameraStream ||
+    video.videoWidth === 0
+  ) {
+
+    alert(
+      "Kamera belum siap."
+    );
+
+    return;
+
+  }
+
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const context =
+    canvas.getContext("2d");
+
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  const foto =
+    canvas.toDataURL(
+      "image/jpeg",
+      0.8
+    );
+
+
+  console.log(
+    "FOTO BERHASIL DIAMBIL"
+  );
+
+
+  document.getElementById(
+    "status"
+  ).innerText =
+    "🟢 Foto berhasil diambil.";
+
+
+  console.log(foto);
+
+}
+
+
+window.addEventListener(
+  "load",
+  mulaiKamera
+);
+
+</script>
+
+</body>
+
+</html>
