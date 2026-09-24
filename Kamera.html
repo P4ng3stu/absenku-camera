@@ -7,7 +7,8 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0">
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>ABSENKU Camera</title>
 
@@ -73,186 +74,238 @@
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <h1>📷 ABSENKU</h1>
+    <h1>📷 ABSENKU</h1>
 
-  <video
-    id="video"
-    autoplay
-    playsinline>
-  </video>
+    <video
+      id="video"
+      autoplay
+      playsinline
+    ></video>
 
-  <button onclick="ambilFoto()">
-    📸 AMBIL FOTO
-  </button>
+    <button onclick="ambilFoto()">
+      📸 AMBIL FOTO
+    </button>
 
-  <div id="status">
-    ⏳ Menyiapkan kamera...
+    <div id="status">
+      ⏳ Menyiapkan kamera...
+    </div>
+
+    <canvas id="canvas"></canvas>
+
   </div>
 
-  <canvas id="canvas"></canvas>
 
-</div>
+  <script>
 
-
-<script>
-
-let cameraStream = null;
+    let cameraStream = null;
 
 
-async function mulaiKamera() {
+    async function mulaiKamera() {
 
-  const video = document.getElementById("video");
-  const status = document.getElementById("status");
+      const video =
+        document.getElementById("video");
 
-  try {
+      const status =
+        document.getElementById("status");
 
-    if (!navigator.mediaDevices) {
-      status.innerText =
-        "❌ Browser tidak mendukung akses kamera.";
-      return;
-    }
 
-    if (!navigator.mediaDevices.getUserMedia) {
-      status.innerText =
-        "❌ getUserMedia tidak tersedia.";
-      return;
-    }
+      try {
 
-    status.innerText =
-      "⏳ Meminta izin kamera...";
-
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user"
-        },
-        audio: false
-      });
-
-    cameraStream = stream;
-
-    video.srcObject = stream;
-
-    video.onloadedmetadata = function() {
-
-      video.play()
-        .then(function() {
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
 
           status.innerText =
-            "🟢 Kamera siap digunakan.";
+            "❌ Browser tidak mendukung kamera.";
 
-          console.log(
-            "KAMERA BERHASIL AKTIF"
-          );
+          return;
 
-        })
-        .catch(function(error) {
+        }
 
-          console.error(
-            "VIDEO PLAY ERROR:",
-            error
-          );
 
-          status.innerText =
-            "❌ Video tidak dapat dijalankan.";
+        status.innerText =
+          "⏳ Meminta izin kamera...";
 
-        });
 
-    };
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
 
-  } catch (error) {
+            video: {
+              facingMode: "user"
+            },
 
-    console.error(
-      "ERROR KAMERA:",
-      error
+            audio: false
+
+          });
+
+
+        cameraStream = stream;
+
+
+        video.srcObject =
+          cameraStream;
+
+
+        video.onloadedmetadata =
+          function() {
+
+            video.play()
+              .then(function() {
+
+                status.innerText =
+                  "🟢 Kamera siap digunakan.";
+
+                console.log(
+                  "KAMERA BERHASIL AKTIF"
+                );
+
+              })
+              .catch(function(error) {
+
+                console.error(
+                  "VIDEO PLAY ERROR:",
+                  error
+                );
+
+                status.innerText =
+                  "❌ Video tidak dapat dijalankan.";
+
+              });
+
+          };
+
+
+      } catch (error) {
+
+        console.error(
+          "ERROR KAMERA:",
+          error
+        );
+
+
+        status.innerText =
+          "❌ Kamera gagal: " +
+          error.name +
+          " - " +
+          error.message;
+
+      }
+
+    }
+
+
+    function ambilFoto() {
+
+      const video =
+        document.getElementById("video");
+
+      const canvas =
+        document.getElementById("canvas");
+
+
+      if (
+        !cameraStream ||
+        video.videoWidth === 0
+      ) {
+
+        alert(
+          "Kamera belum siap."
+        );
+
+        return;
+
+      }
+
+
+      canvas.width =
+        video.videoWidth;
+
+      canvas.height =
+        video.videoHeight;
+
+
+      const context =
+        canvas.getContext("2d");
+
+
+      context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      const foto =
+        canvas.toDataURL(
+          "image/jpeg",
+          0.8
+        );
+
+
+      document.getElementById(
+        "status"
+      ).innerText =
+        "🟢 Foto berhasil diambil.";
+
+
+      console.log(
+        "FOTO BERHASIL DIAMBIL"
+      );
+
+
+      // Kirim foto kembali ke ABSENKU
+
+      if (window.opener) {
+
+        window.opener.postMessage(
+
+          {
+            type: "ABSENKU_FOTO",
+            foto: foto
+          },
+
+          "*"
+
+        );
+
+      }
+
+
+      // Jika kamera dibuka sebagai iframe
+
+      else {
+
+        window.parent.postMessage(
+
+          {
+            type: "ABSENKU_FOTO",
+            foto: foto
+          },
+
+          "*"
+
+        );
+
+      }
+
+    }
+
+
+    window.addEventListener(
+      "DOMContentLoaded",
+      function() {
+
+        mulaiKamera();
+
+      }
     );
 
-    status.innerText =
-      "❌ Kamera gagal: " +
-      error.name +
-      " - " +
-      error.message;
-  }
-}
-
-function ambilFoto() {
-
-  const video =
-    document.getElementById("video");
-
-  const canvas =
-    document.getElementById("canvas");
-
-
-  if (
-    !cameraStream ||
-    video.videoWidth === 0
-  ) {
-
-    alert(
-      "Kamera belum siap."
-    );
-
-    return;
-
-  }
-
-
-  canvas.width =
-    video.videoWidth;
-
-  canvas.height =
-    video.videoHeight;
-
-
-  const context =
-    canvas.getContext("2d");
-
-
-  context.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  const foto =
-    canvas.toDataURL(
-      "image/jpeg",
-      0.8
-    );
-
-
-  console.log(
-    "FOTO BERHASIL DIAMBIL"
-  );
-
-
-  document.getElementById(
-  "status"
-).innerText =
-  "🟢 Foto berhasil diambil.";
-
-
-// Kirim foto ke halaman ABSENKU
-window.parent.postMessage(
-  {
-    type: "ABSENKU_FOTO",
-    foto: foto
-  },
-  "*"
-);
-
-
-window.addEventListener("DOMContentLoaded", function() {
-  mulaiKamera();
-});
-
-</script>
+  </script>
 
 </body>
 
