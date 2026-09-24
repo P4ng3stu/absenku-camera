@@ -217,14 +217,19 @@ function ambilFoto() {
 
 
   document.getElementById(
-    "status"
-  ).innerText =
-    "🟢 Foto berhasil diambil.";
+  "status"
+).innerText =
+  "🟢 Foto berhasil diambil.";
 
 
-  console.log(foto);
-
-}
+// Kirim foto ke halaman ABSENKU
+window.parent.postMessage(
+  {
+    type: "ABSENKU_FOTO",
+    foto: foto
+  },
+  "*"
+);
 
 
 window.addEventListener(
