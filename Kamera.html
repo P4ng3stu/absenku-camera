@@ -209,20 +209,30 @@
         );
 
 
-        if (window.opener) {
+        if (
+  window.opener &&
+  !window.opener.closed
+) {
 
-          window.opener.postMessage(
+  window.opener.postMessage(
+    {
+      type: "ABSENKU_FOTO",
+      foto: foto
+    },
+    "*"
+  );
 
-            {
-              type: "ABSENKU_FOTO",
-              foto: foto
-            },
+  console.log(
+    "🟢 FOTO BERHASIL DIKIRIM KE ABSENKU"
+  );
 
-            "*"
+} else {
 
-          );
+  console.log(
+    "🔴 ABSENKU TIDAK DITEMUKAN"
+  );
 
-        }
+}
 
 
         if (
